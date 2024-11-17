@@ -20,7 +20,7 @@ public class   Main extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/campuswallet/login.fxml"));
         Parent root = loader.load();
 
-        connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/campuswallet", "root", "$@Y@d012");
+        connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/campuswallet", "root", "Sayad@2024!");
         transactionDAO = new TransactionDAO(connection);
 
 

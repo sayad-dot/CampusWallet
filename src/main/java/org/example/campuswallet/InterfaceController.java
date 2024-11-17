@@ -74,14 +74,23 @@ public class InterfaceController {
     private void handleAddMoney(ActionEvent event) {
         loadTransactionPage(event);
     }
-
     @FXML
-    public void handleCurrencyConverter() {
+    public void handleCurrencyConverter(ActionEvent event) {
         try {
+            // Load Currency Converter scene
             Parent root = FXMLLoader.load(getClass().getResource("CurrencyConverter.fxml"));
-            Stage stage = new Stage();
-            stage.setTitle("Currency Converter");
-            stage.setScene(new Scene(root));
+
+            // Use the current Stage (window) to set the new scene
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setTitle("Currency Converter");  // Set the title of the stage
+            Scene scene = new Scene(root);
+
+            // Set preferred width and height for the new window
+            scene.getRoot().requestLayout(); // Ensures scene properly lays out its content
+            stage.setWidth(800);   // Set width to 800px
+            stage.setHeight(600);  // Set height to 600px
+
+            stage.setScene(scene);  // Set the updated scene with the proper layout
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,12 +98,22 @@ public class InterfaceController {
     }
 
     @FXML
-    public void handleLoanCalculator() {
+    public void handleLoanCalculator(ActionEvent event) {
         try {
+            // Load Loan Calculator scene
             Parent root = FXMLLoader.load(getClass().getResource("LoanCalculator.fxml"));
-            Stage stage = new Stage();
-            stage.setTitle("Loan Calculator");
-            stage.setScene(new Scene(root));
+
+            // Use the current Stage (window) to set the new scene
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setTitle("Loan Calculator");  // Set the title of the stage
+            Scene scene = new Scene(root);
+
+            // Set preferred width and height for the new window
+            scene.getRoot().requestLayout(); // Ensures scene properly lays out its content
+            stage.setWidth(800);   // Set width to 800px
+            stage.setHeight(600);  // Set height to 600px
+
+            stage.setScene(scene);  // Set the updated scene with the proper layout
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();

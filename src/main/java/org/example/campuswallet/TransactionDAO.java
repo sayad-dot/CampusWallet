@@ -19,31 +19,59 @@ public class TransactionDAO {
         this.connection = connection;
     }
 
-    public void transferMoney(String senderUsername, String receiverUsername, double amount) throws SQLException {
-        // Start a transaction
-        connection.setAutoCommit(false);
+    public boolean transferMoney(Connection connection, String senderId, String receiverId, double amount) throws SQLException {
+        connection.setAutoCommit(false); // Start a transaction
 
         try {
-            // Deduct amount from sender's account
-            updateAccountBalance(senderUsername, -amount);
+            // Step 1: Deduct amount from sender's account
+            if (!updateAccountBalance(connection, senderId, -amount)) {
+                connection.rollback();
+                return false; // Insufficient funds or other failure
+            }
 
-            // Add amount to receiver's account
-            updateAccountBalance(receiverUsername, amount);
+            // Step 2: Add amount to receiver's account
+            if (!updateAccountBalance(connection, receiverId, amount)) {
+                connection.rollback();
+                return false; // Receiver account error
+            }
 
-            // Add a new transaction record
-            addTransaction(new Transaction(0, senderUsername, receiverUsername, amount, new Date()));
+            // Step 3: Record the transaction
+            addTransaction(connection, senderId, receiverId, amount);
 
-            // Commit the transaction if all statements are executed successfully
+            // Commit the transaction
             connection.commit();
+            return true;
         } catch (SQLException e) {
-            // Rollback the transaction if an error occurs
-            connection.rollback();
-            throw e;
+            connection.rollback(); // Rollback if any error occurs
+            throw e; // Re-throw to propagate exception
         } finally {
-            // Restore auto-commit mode
-            connection.setAutoCommit(true);
+            connection.setAutoCommit(true); // Restore default auto-commit behavior
         }
     }
+
+    private boolean updateAccountBalance(Connection connection, String userId, double amount) throws SQLException {
+        String query = "UPDATE users SET balance = balance + ? WHERE ID = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setDouble(1, amount);
+            preparedStatement.setString(2, userId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0; // Return true if rows are affected
+        }
+    }
+
+    private void addTransaction(Connection connection, String senderId, String receiverId, double amount) throws SQLException {
+        String query = "INSERT INTO transactions (sender_id, receiver_id, amount, timestamp) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, senderId);
+            preparedStatement.setString(2, receiverId);
+            preparedStatement.setDouble(3, amount);
+            preparedStatement.setTimestamp(4, new Timestamp(new Date().getTime()));
+            preparedStatement.executeUpdate();
+        }
+    }
+
+
+
 
     public boolean authenticateUser(String username, String password) throws SQLException {
         String query = "SELECT * FROM users WHERE username = ? AND password = ?";
@@ -56,31 +84,5 @@ public class TransactionDAO {
         }
     }
 
-    private void updateAccountBalance(String username, double amount) throws SQLException {
-        String query = "UPDATE accounts SET balance = balance + ? WHERE username = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setDouble(1, amount);
-            preparedStatement.setString(2, username);
-            preparedStatement.executeUpdate();
-        }
-    }
 
-    public void addTransaction(Transaction transaction) throws SQLException {
-        String query = "INSERT INTO transactions (sender_username, receiver_username, amount, timestamp) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            preparedStatement.setString(1, transaction.getSenderUsername());
-            preparedStatement.setString(2, transaction.getReceiverUsername());
-            preparedStatement.setDouble(3, transaction.getAmount());
-            preparedStatement.setTimestamp(4, new Timestamp(transaction.getTimestamp().getTime()));
-            preparedStatement.executeUpdate();
-
-            // Retrieve the generated ID
-            try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                if (resultSet.next()) {
-                    int generatedId = resultSet.getInt(1);
-                    transaction.setId(generatedId);
-                }
-            }
-        }
-    }
 }

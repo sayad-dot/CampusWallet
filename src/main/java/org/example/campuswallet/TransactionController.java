@@ -34,7 +34,7 @@ public class TransactionController {
 
     private static final String DB_URL = "jdbc:mysql://localhost:3306/campuswallet";
     private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "$@Y@d012";
+    private static final String DB_PASSWORD = "Sayad@2024!";
 
     private String username;
 
@@ -44,11 +44,11 @@ public class TransactionController {
 
     @FXML
     private void handleSendMoney() {
-        String accountNumber = accountNumberField.getText();
+        String receiverId = accountNumberField.getText(); // Assuming accountNumberField contains the receiver's ID
         String amountStr = amountField.getText();
         String password = passwordField.getText();
 
-        if (accountNumber.isEmpty() || amountStr.isEmpty() || password.isEmpty()) {
+        if (receiverId.isEmpty() || amountStr.isEmpty() || password.isEmpty()) {
             showAlert(Alert.AlertType.ERROR, "Transaction Failed", "Please fill in all fields.");
             return;
         }
@@ -61,16 +61,50 @@ public class TransactionController {
             return;
         }
 
-        if (authenticateUser(username, password)) {
-            if (transferAmount(username, accountNumber, amount)) {
-                showAlert(Alert.AlertType.INFORMATION, "Transaction Successful", "Amount transferred successfully.");
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Transaction Failed", "Unable to transfer amount. Please check the account details.");
+        if (authenticateUser(username, password)) { // Assuming 'username' is already available in the controller
+            try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                // Create a TransactionDAO instance with the current connection
+                TransactionDAO transactionDAO = new TransactionDAO(connection);
+
+                // Fetch sender's ID using the username
+                String senderId = getUserIdByUsername(connection, username);
+                if (senderId == null) {
+                    showAlert(Alert.AlertType.ERROR, "Transaction Failed", "Sender account not found.");
+                    return;
+                }
+
+                // Call transferMoney method from the TransactionDAO
+                boolean success = transactionDAO.transferMoney(connection, senderId, receiverId, amount);
+
+                if (success) {
+                    showAlert(Alert.AlertType.INFORMATION, "Transaction Successful", "Amount transferred successfully.");
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Transaction Failed", "Unable to transfer amount. Please check the account details.");
+                }
+            } catch (SQLException e) {
+                showAlert(Alert.AlertType.ERROR, "Transaction Failed", "Database error occurred.");
+                e.printStackTrace();
             }
         } else {
             showAlert(Alert.AlertType.ERROR, "Transaction Failed", "Invalid password.");
         }
     }
+
+
+    // Helper method to fetch user ID by username
+    private String getUserIdByUsername(Connection connection, String username) throws SQLException {
+        String query = "SELECT ID FROM users WHERE name = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, username);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString("ID");
+                }
+            }
+        }
+        return null; // Return null if no user found
+    }
+
     @FXML
     private void handleBackButtonAction() {
         try {

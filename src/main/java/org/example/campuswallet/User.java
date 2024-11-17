@@ -7,8 +7,8 @@ public class User {
     private String username;
 
     private String ID;
-    private String password;
     private String name;
+    private String password;
     private String email;
     private String dob;
     private String phone;
@@ -16,11 +16,11 @@ public class User {
 
 
     // Constructor
-    public User(String ID, String password, String name, String email, String dob, String phone) {
+    public User(String ID, String name,String password,  String email, String dob, String phone) {
 
         this.ID=ID;
-        this.password = password;
         this.name = name;
+        this.password = password;
         this.email = email;
         this.dob = dob;
         this.phone = phone;
@@ -36,6 +36,14 @@ public class User {
         this.ID=ID;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -44,13 +52,7 @@ public class User {
         this.password = password;
     }
 
-    public String getName() {
-        return name;
-    }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public String getEmail() {
         return email;

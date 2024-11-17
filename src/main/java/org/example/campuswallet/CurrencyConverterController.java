@@ -15,47 +15,50 @@ import java.net.URL;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 
-public class CurrencyConverterController {
-    @FXML private TextField amountField;
-    @FXML private TextField fromCurrencyField;
-    @FXML private TextField toCurrencyField;
-    @FXML private Label resultLabel;
 
-    @FXML
-    private Button backButton;
 
-    @FXML
-    public void handleConvertCurrency() {
-        double amount = Double.parseDouble(amountField.getText());
-        String fromCurrency = fromCurrencyField.getText();
-        String toCurrency = toCurrencyField.getText();
-        double convertedAmount = convertCurrency(amount, fromCurrency, toCurrency);
-        resultLabel.setText(String.format("Converted Amount: %.2f", convertedAmount));
-    }
+    public class CurrencyConverterController {
+        @FXML private TextField amountField;
+        @FXML private ComboBox<String> fromCurrencyComboBox;
+        @FXML private ComboBox<String> toCurrencyComboBox;
+        @FXML private Label resultLabel;
 
-    private double convertCurrency(double amount, String fromCurrency, String toCurrency) {
-        try {
-            String urlStr = String.format("https://api.exchangerate-api.com/v4/latest/%s", fromCurrency);
-            URL url = new URL(urlStr);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+        @FXML
+        private Button backButton;
 
-            StringBuilder jsonStr = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    jsonStr.append(line);
-                }
-            }
-
-            double exchangeRate = parseExchangeRate(jsonStr.toString(), toCurrency);
-            return amount * exchangeRate;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return 0.0;
+        @FXML
+        private void handleConvertCurrency() {
+            double amount = Double.parseDouble(amountField.getText());
+            String fromCurrency = fromCurrencyComboBox.getValue();  // Get selected value
+            String toCurrency = toCurrencyComboBox.getValue();      // Get selected value
+            double convertedAmount = convertCurrency(amount, fromCurrency, toCurrency);
+            resultLabel.setText(String.format("Converted Amount: %.2f", convertedAmount));
         }
-    }
+
+        private double convertCurrency(double amount, String fromCurrency, String toCurrency) {
+            try {
+                String urlStr = String.format("https://api.exchangerate-api.com/v4/latest/%s", fromCurrency);
+                URL url = new URL(urlStr);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+
+                StringBuilder jsonStr = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        jsonStr.append(line);
+                    }
+                }
+
+                double exchangeRate = parseExchangeRate(jsonStr.toString(), toCurrency);
+                return amount * exchangeRate;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return 0.0;
+            }
+        }
     @FXML
     private void handleBackButtonAction() {
         try {

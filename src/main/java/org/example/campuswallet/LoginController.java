@@ -28,7 +28,7 @@ public class LoginController {
 
     private static final String DB_URL = "jdbc:mysql://localhost:3306/campuswallet";
     private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "$@Y@d012";
+    private static final String DB_PASSWORD = "Sayad@2024!";
 
     @FXML
     private void handleLogin(ActionEvent event) {
