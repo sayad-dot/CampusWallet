@@ -7,7 +7,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #135D66;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.campuswallet.LoginController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #135D66;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.campuswallet.LoginController">
    <children>
       <Button fx:id="CreateAccountButton" layoutX="426.0" layoutY="342.0" mnemonicParsing="false" onAction="#handleCreateAccountButton" prefHeight="49.0" prefWidth="123.0" style="-fx-background-color: #A79277;" text="Create Account">
          <font>
@@ -38,7 +38,11 @@
             <Font name="Source Code Pro Light" size="38.0" />
          </font>
       </Text>
-      <Button fx:id="LoginAsAdmin" text="Login as Admin" onAction="#handleAdminLogin"/>
+      <Button fx:id="LoginAsAdmin" layoutX="14.0" layoutY="342.0" onAction="#handleAdminLogin" style="-fx-background-color: #A79277;" text="Login as Admin" textFill="#2c2828">
+         <font>
+            <Font name="Arial Bold Italic" size="13.0" />
+         </font>
+      </Button>
 
    </children>
 </AnchorPane>

@@ -1,16 +1,11 @@
 package org.example.campuswallet;
 
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-
 
 public class TransactionDAO {
     private Connection connection;
@@ -19,70 +14,71 @@ public class TransactionDAO {
         this.connection = connection;
     }
 
-    public boolean transferMoney(Connection connection, String senderId, String receiverId, double amount) throws SQLException {
-        connection.setAutoCommit(false); // Start a transaction
-
+    public boolean transferMoney(String senderId, String receiverId, double amount) throws SQLException {
+        connection.setAutoCommit(false);
         try {
-            // Step 1: Deduct amount from sender's account
-            if (!updateAccountBalance(connection, senderId, -amount)) {
+            // 1) Withdraw
+            if (!updateAccountBalance(senderId, -amount)) {
                 connection.rollback();
-                return false; // Insufficient funds or other failure
+                return false; // insufficient funds or error
             }
-
-            // Step 2: Add amount to receiver's account
-            if (!updateAccountBalance(connection, receiverId, amount)) {
+            // 2) Deposit
+            if (!updateAccountBalance(receiverId, amount)) {
                 connection.rollback();
-                return false; // Receiver account error
+                return false; // receiver error
             }
+            // 3) Record the transaction
+            addTransaction(senderId, receiverId, amount);
 
-            // Step 3: Record the transaction
-            addTransaction(connection, senderId, receiverId, amount);
-
-            // Commit the transaction
             connection.commit();
             return true;
         } catch (SQLException e) {
-            connection.rollback(); // Rollback if any error occurs
-            throw e; // Re-throw to propagate exception
+            connection.rollback();
+            throw e;
         } finally {
-            connection.setAutoCommit(true); // Restore default auto-commit behavior
+            connection.setAutoCommit(true);
         }
     }
 
-    private boolean updateAccountBalance(Connection connection, String userId, double amount) throws SQLException {
-        String query = "UPDATE users SET balance = balance + ? WHERE ID = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setDouble(1, amount);
-            preparedStatement.setString(2, userId);
-            int rowsAffected = preparedStatement.executeUpdate();
-            return rowsAffected > 0; // Return true if rows are affected
-        }
-    }
-
-    private void addTransaction(Connection connection, String senderId, String receiverId, double amount) throws SQLException {
-        String query = "INSERT INTO transactions (sender_id, receiver_id, amount, timestamp) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, senderId);
-            preparedStatement.setString(2, receiverId);
-            preparedStatement.setDouble(3, amount);
-            preparedStatement.setTimestamp(4, new Timestamp(new Date().getTime()));
-            preparedStatement.executeUpdate();
-        }
-    }
-
-
-
-
-    public boolean authenticateUser(String username, String password) throws SQLException {
-        String query = "SELECT * FROM users WHERE username = ? AND password = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, username);
-            preparedStatement.setString(2, password);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                return resultSet.next(); // Returns true if user is found, false otherwise
+    private double getBalance(String userId) throws SQLException {
+        String sql = "SELECT balance FROM users WHERE ID = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("balance");
+                } else {
+                    throw new SQLException("Account not found: " + userId);
+                }
             }
         }
     }
 
+    private boolean updateAccountBalance(String userId, double delta) throws SQLException {
+        // If this is a withdrawal, ensure no overdraft
+        if (delta < 0) {
+            double current = getBalance(userId);
+            if (current + delta < 0) {
+                return false; // insufficient funds
+            }
+        }
+        // Perform the update
+        String sql = "UPDATE users SET balance = balance + ? WHERE ID = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setDouble(1, delta);
+            ps.setString(2, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
 
+    private void addTransaction(String senderId, String receiverId, double amount) throws SQLException {
+        String sql = "INSERT INTO transactions (sender_id, receiver_id, amount, timestamp) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, senderId);
+            ps.setString(2, receiverId);
+            ps.setDouble(3, amount);
+            ps.setTimestamp(4, new Timestamp(new Date().getTime()));
+            ps.executeUpdate();
+        }
+    }
 }
