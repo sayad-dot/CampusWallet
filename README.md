@@ -1,4 +1,4 @@
-CampusWallet
+
 CampusWallet is an Online Banking Management desktop application built using Java, JavaFX SceneBuilder, and MySQL.
 It allows users to manage their banking activities easily, including account management, money transfers, loan calculations, currency conversions, and activity tracking.
 
